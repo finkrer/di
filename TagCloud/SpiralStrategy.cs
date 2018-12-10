@@ -7,35 +7,23 @@ namespace TagCloud
 {
     public class SpiralStrategy : IPlacementStrategy
     {
-        public List<Rectangle> Rectangles { get; }
         public Point Center { get; }
 
-        public SpiralStrategy(List<Rectangle> rectangles, Point center)
+        public SpiralStrategy(Point center)
         {
-            Rectangles = rectangles;
             Center = center;
         }
 
-        public Rectangle PlaceRectangle(Rectangle newRectangle)
+        public Rectangle PlaceRectangle(Rectangle newRectangle, Rectangle[] existingRectangles)
         {
-            return MoveToValidPosition(newRectangle);
-        }
-
-        private bool RectangleHasCollisions(Rectangle rectangle)
-        {
-            return Rectangles.Any(r => r.IntersectsWith(rectangle));
-        }
-
-        private Rectangle MoveToValidPosition(Rectangle rectangle)
-        {
-            for (var step = 1; RectangleHasCollisions(rectangle); step++)
+            for (var step = 1; newRectangle.HasCollisionsWith(existingRectangles); step++)
             {
                 var x = step * Math.Cos(step);
                 var y = step * Math.Sin(step);
-                rectangle.Location = new Point((int)x + Center.X, (int)y + Center.Y);
+                newRectangle.Location = new Point((int)x + Center.X, (int)y + Center.Y);
             }
 
-            return rectangle;
+            return newRectangle;
         }
     }
 }

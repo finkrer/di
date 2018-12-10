@@ -1,4 +1,5 @@
 ﻿using System.Drawing;
+using System.Linq;
 
 namespace TagCloud
 {
@@ -8,6 +9,11 @@ namespace TagCloud
         {
             rectangle.Location = new Point(rectangle.X + x, rectangle.Y + y);
             return rectangle;
+        }
+
+        public static bool HasCollisionsWith(this Rectangle rectangle, Rectangle[] otherRectangles)
+        {
+            return otherRectangles.Any(r => r.IntersectsWith(rectangle));
         }
     }
 }

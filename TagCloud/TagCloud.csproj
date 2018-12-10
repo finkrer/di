@@ -42,6 +42,9 @@
     <Reference Include="CommandLine, Version=2.3.0.0, Culture=neutral, PublicKeyToken=de6f01bd326f8c32, processorArchitecture=MSIL">
       <HintPath>..\packages\CommandLineParser.2.3.0\lib\net45\CommandLine.dll</HintPath>
     </Reference>
+    <Reference Include="NHunspell, Version=1.2.5554.16953, Culture=neutral, PublicKeyToken=1ac793ea843b4366, processorArchitecture=MSIL">
+      <HintPath>..\packages\NHunspell.1.2.5554.16953\lib\net\NHunspell.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.Composition" />
     <Reference Include="System.Configuration" />
@@ -96,7 +99,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CenterMoveStrategy.cs" />
-    <Compile Include="CircularCloudLayouter.cs" />
+    <Compile Include="CloudLayouter.cs" />
     <Compile Include="CloudVisualizer.cs" />
     <Compile Include="ICloudLayouter.cs" />
     <Compile Include="ICloudVisualizer.cs" />
@@ -106,6 +109,7 @@
     <Compile Include="RectangleExtensions.cs" />
     <Compile Include="RectangleVisualizer.cs" />
     <Compile Include="SpiralStrategy.cs" />
+    <Compile Include="TextAnalyzer.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

@@ -11,14 +11,14 @@ namespace TagCloudTests
 {
     internal class CircularCloudTests
     {
-        private CircularCloudLayouter layouter;
+        private CloudLayouter layouter;
         private readonly Size size = new Size(20, 20);
 
         [SetUp]
         public void SetUp()
         {
             var point = new Point(0, 0);
-            layouter = new CircularCloudLayouter(point);
+            layouter = new CloudLayouter(point, new SpiralStrategy(point), new CenterMoveStrategy(point));
         }
 
         [TearDown]
@@ -28,15 +28,16 @@ namespace TagCloudTests
                 return;
             var imagePath = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
+                "Tests",
                 TestContext.CurrentContext.Test.Name + $"{DateTime.Now:yyyy-MM-dd_hh-mm-ss-fff}" + ".bmp");
             new CloudVisualizer().CreateImage(layouter.Rectangles, imagePath);
             TestContext.Out.WriteLine("Tag cloud visualization saved to file " + imagePath);
         }
 
         [Test]
-        public void Constructor_CreatesLayouterWithCenter()
+        public void Constructor_ShouldCreateLayouterWithCenter()
         {
-            var layouter = new CircularCloudLayouter(new Point(0, 0));
+            var layouter = new CloudLayouter(new Point(0, 0));
             layouter.Center.Should().Be(new Point(0, 0));
         }
 
@@ -44,7 +45,7 @@ namespace TagCloudTests
         [TestCase(1, 0, TestName = "has zero height")]
         [TestCase(-1, 1, TestName = "has negative width")]
         [TestCase(1, -1, TestName = "has negative height")]
-        public void PutNextRectangle_ThrowsExceptionWhenSize(int width, int height)
+        public void PutNextRectangle_ShouldThrowExceptionWhenSize(int width, int height)
         {
             Action putRectangle = () => layouter.PutNextRectangle(new Size(width, height));
 
@@ -52,21 +53,21 @@ namespace TagCloudTests
         }
 
         [Test]
-        public void PutNextRectangle_ReturnsCorrectRectangle()
+        public void PutNextRectangle_ShouldReturnCorrectRectangle()
         {
             var returnedValue = layouter.PutNextRectangle(size);
             returnedValue.Should().Be(new Rectangle(layouter.Center, size));
         }
 
         [Test]
-        public void PutNextRectangle_PlacesRectangleIntoCollection()
+        public void PutNextRectangle_ShouldPlaceRectangleIntoCollection()
         {
             layouter.PutNextRectangle(size);
             layouter.Rectangles.Should().Contain(new Rectangle(layouter.Center, size));
         }
 
         [Test]
-        public void PutNextRectangle_RectanglesDoNotIntersect()
+        public void PutNextRectangle_ShouldNotReturnIntersectingRectangles()
         {
             PopulateWithRandomRectangles(layouter);
 
@@ -83,7 +84,7 @@ namespace TagCloudTests
         }
 
         [Test]
-        public void PutNextRectangle_RectanglesHaveDenseDistribution()
+        public void PutNextRectangle_ShouldDistributeRectanglesDensely()
         {
             PopulateWithRandomRectangles(layouter);
             var rectangles = layouter.Rectangles;
@@ -98,7 +99,7 @@ namespace TagCloudTests
         }
 
         [Test]
-        public void PutNextRectangle_CloudHasCircularShape()
+        public void PutNextRectangle_ShouldMakeCircularCloud()
         {
             PopulateWithRandomRectangles(layouter);
             var rectangles = layouter.Rectangles;

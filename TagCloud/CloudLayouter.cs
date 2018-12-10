@@ -1,16 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 
 namespace TagCloud
 {
-    public class CircularCloudLayouter : ICloudLayouter
+    public class CloudLayouter : ICloudLayouter
     {
+        private readonly IPlacementStrategy[] strategies;
         public Point Center { get; }
         public List<Rectangle> Rectangles { get; } = new List<Rectangle>();
 
-        public CircularCloudLayouter(Point center = new Point())
+        public CloudLayouter(Point center = new Point(), params IPlacementStrategy[] strategies)
         {
+            this.strategies = strategies;
             Center = center;
         }
 
@@ -20,11 +23,8 @@ namespace TagCloud
                 throw new ArgumentException("Rectangle dimensions must be positive");
 
             var rectangle = new Rectangle(Center, rectangleSize);
-            var spiralStrategy = new SpiralStrategy(Rectangles, Center);
-            var centerMoveStrategy = new CenterMoveStrategy(Rectangles, Center);
-
-            rectangle = spiralStrategy.PlaceRectangle(rectangle);
-            rectangle = centerMoveStrategy.PlaceRectangle(rectangle);
+            rectangle = strategies.Aggregate(rectangle,
+                (current, strategy) => strategy.PlaceRectangle(current, Rectangles.ToArray()));
             Rectangles.Add(rectangle);
             return rectangle;
         }

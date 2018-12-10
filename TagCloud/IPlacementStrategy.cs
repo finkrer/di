@@ -4,6 +4,6 @@ namespace TagCloud
 {
     public interface IPlacementStrategy
     {
-        Rectangle PlaceRectangle(Rectangle newRectangle);
+        Rectangle PlaceRectangle(Rectangle newRectangle, Rectangle[] existingRectangles);
     }
 }

@@ -1,52 +1,38 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Drawing;
-using System.Linq;
 
 namespace TagCloud
 {
     public class CenterMoveStrategy : IPlacementStrategy
     {
-        public List<Rectangle> Rectangles { get; }
         public Point Center { get; }
 
-        public CenterMoveStrategy(List<Rectangle> rectangles, Point center)
+        public CenterMoveStrategy(Point center)
         {
-            Rectangles = rectangles;
             Center = center;
         }
 
-        public Rectangle PlaceRectangle(Rectangle newRectangle)
+        public Rectangle PlaceRectangle(Rectangle newRectangle, Rectangle[] existingRectangles)
         {
-            return TryMoveCloserToCenter(newRectangle);
-        }
+            var stepX = 1 * Math.Sign(Center.X - newRectangle.Location.X);
+            var stepY = 1 * Math.Sign(Center.Y - newRectangle.Location.Y);
 
-        private bool RectangleHasCollisions(Rectangle rectangle)
-        {
-            return Rectangles.Any(r => r.IntersectsWith(rectangle));
-        }
-
-        private Rectangle TryMoveCloserToCenter(Rectangle rectangle)
-        {
-            var stepX = 1 * Math.Sign(Center.X - rectangle.Location.X);
-            var stepY = 1 * Math.Sign(Center.Y - rectangle.Location.Y);
-
-            var previousLocation = rectangle.Location;
-            while (!RectangleHasCollisions(rectangle) && rectangle.X != Center.X + stepX)
+            var previousLocation = newRectangle.Location;
+            while (!newRectangle.HasCollisionsWith(existingRectangles) && newRectangle.X != Center.X + stepX)
             {
-                previousLocation = rectangle.Location;
-                rectangle = rectangle.Move(stepX, 0);
+                previousLocation = newRectangle.Location;
+                newRectangle = newRectangle.Move(stepX, 0);
             }
-            rectangle.Location = previousLocation;
+            newRectangle.Location = previousLocation;
 
-            while (!RectangleHasCollisions(rectangle) && rectangle.Y != Center.Y + stepY)
+            while (!newRectangle.HasCollisionsWith(existingRectangles) && newRectangle.Y != Center.Y + stepY)
             {
-                previousLocation = rectangle.Location;
-                rectangle = rectangle.Move(0, stepY);
+                previousLocation = newRectangle.Location;
+                newRectangle = newRectangle.Move(0, stepY);
             }
-            rectangle.Location = previousLocation;
+            newRectangle.Location = previousLocation;
 
-            return rectangle;
+            return newRectangle;
         }
     }
 }
