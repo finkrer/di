@@ -1,10 +1,10 @@
-﻿using System.Collections.Generic;
-using System.Drawing;
+﻿using System.Drawing;
 
 namespace TagCloud
 {
     public interface ICloudVisualizer
     {
-        Bitmap CreateImage(IEnumerable<Rectangle> rectangles, string path);
+        void AddWord(Word word, Rectangle position, Font font);
+        Bitmap CreateImage(Color textColor, Color backgroundColor, Size? size);
     }
 }

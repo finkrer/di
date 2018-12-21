@@ -1,36 +1,44 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.Linq;
-using System.Reflection;
 
 namespace TagCloud
 {
     public class CloudVisualizer : ICloudVisualizer
     {
-        public Bitmap CreateImage(IEnumerable<Rectangle> rectangles, string path)
+        public string Path { get; }
+        private List<WordVisualization> Words { get; } = new List<WordVisualization>();
+
+        public CloudVisualizer(string path)
         {
-            rectangles = rectangles.ToList();
+            Path = path;
+        }
+
+        public void AddWord(Word word, Rectangle position, Font font)
+        {
+            Words.Add(new WordVisualization(word.Value, position, font));
+        }
+
+        public Bitmap CreateImage(Color textColor, Color backgroundColor, Size? size = null)
+        {
+            var rectangles = Words.Select(w => w.Position).ToList();
             var width = rectangles.Max(r => r.Right) - rectangles.Min(r => r.Left);
             var height = rectangles.Max(r => r.Bottom) - rectangles.Min(r => r.Top);
-            var image = new Bitmap(width * 2, height * 2);
+            var imageSize = size ?? new Size(width * 2, height * 2);
+            var image = new Bitmap(imageSize.Width, imageSize.Height);
             var graphics = Graphics.FromImage(image);
             var newCenter = new Point(image.Width / 2, image.Height / 2);
-            var random = new Random();
-            var brushes = typeof(Brushes)
-                .GetProperties(BindingFlags.Public | BindingFlags.Static)
-                .Select(pi => (Brush)pi.GetValue(null, null))
-                .ToList();
 
-            foreach (var rectangle in rectangles)
+            graphics.FillRectangle(new SolidBrush(backgroundColor), 0, 0, imageSize.Width, imageSize.Height);
+            foreach (var word in Words)
             {
-                var movedRectangle = new Rectangle(
-                    rectangle.X + newCenter.X, rectangle.Y + newCenter.Y, rectangle.Width, rectangle.Height);
-                graphics.FillRectangle(brushes[random.Next(brushes.Count)], movedRectangle);
-                graphics.DrawRectangle(Pens.Black, movedRectangle);
+                var x = word.Position.X + newCenter.X;
+                var y = word.Position.Y + newCenter.Y;
+                graphics.DrawString(word.Value, word.Font, new SolidBrush(textColor), x, y);
             }
 
-            image.Save(path);
+            image.Save(Path, ImageFormat.Png);
             return image;
         }
     }

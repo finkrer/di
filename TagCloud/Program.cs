@@ -1,42 +1,35 @@
 ﻿using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
+using System.IO;
 using Castle.MicroKernel.Registration;
+using Castle.MicroKernel.Resolvers.SpecializedResolvers;
 using Castle.Windsor;
-using CommandLine;
 
 namespace TagCloud
 {
     public class Program
     {
-        private static void Main(string[] args)
+        private static void Main(string[] argv)
         {
-            var result = Parser.Default.ParseArguments<Options>(args)
-                .WithParsed(ProcessArguments);
+            var args = new MainArgs(argv);
+            ProcessArguments(args);
         }
 
-        private static void ProcessArguments(Options options)
+        private static void ProcessArguments(MainArgs args)
         {
-            var rectangles = options.Rectangles.Select(s => s.Split(',')).Select(x =>
-                new Size(int.Parse(x[0]), int.Parse(x[1])));
             var container = new WindsorContainer();
-            container.Register(Classes.FromThisAssembly()
-                .InSameNamespaceAs<Program>()
-                .WithServiceDefaultInterfaces()
-                .LifestyleTransient());
-            container.Register(Component.For<IEnumerable<Size>>().Instance(rectangles));
-            var visualizer = container.Resolve<RectangleVisualizer>();
-            visualizer.CreateCloudImage(options.ImagePath);
-        }
-
-        private class Options
-        {
-            [Value(0, MetaName = "Image path", HelpText = "The path where the image will be created")]
-            public string ImagePath { get; set; }
-
-            [Value(1, MetaName = "Rectangles", HelpText = "Comma-separated coordinates" +
-                                                          " of the rectangles' upper-left corners")]
-            public IEnumerable<string> Rectangles { get; set; }
+            container.Register(Component.For<WordVisualizer>().ImplementedBy<WordVisualizer>());
+            container.Register(Component.For<ICloudLayouter>().ImplementedBy<CloudLayouter>());
+            container.Register(Component.For<ICloudVisualizer>().ImplementedBy<CloudVisualizer>()
+                .DependsOn(Dependency.OnValue<string>(args.ArgImagePath)));
+            container.Register(Component.For<ITextAnalyzer>()
+                .ImplementedBy<TextAnalyzer>()
+                .DependsOn(Dependency.OnValue("text", new StreamWordSource(new StreamReader(args.ArgSourcePath))))
+                .DependsOn(Dependency.OnValue("stopWords", new StreamWordSource(new StreamReader(args.ArgStopwordsPath)))));
+            container.Register(Component.For<IEnumerable<IPlacementStrategy>>().Instance(new List<IPlacementStrategy>
+                {new SpiralStrategy(), new CenterMoveStrategy()}));
+            container.Kernel.Resolver.AddSubResolver(new CollectionResolver(container.Kernel));
+            var visualizer = container.Resolve<WordVisualizer>();
+            visualizer.CreateCloudImage(args.OptTextColor, args.OptBackgroundColor, args.OptFont, args.OptImageSize);
         }
     }
 }

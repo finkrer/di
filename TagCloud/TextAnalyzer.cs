@@ -1,18 +1,20 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
-using NHunspell;
+using System.Text.RegularExpressions;
 
 namespace TagCloud
 {
-    public class TextAnalyzer
+    public class TextAnalyzer : ITextAnalyzer
     {
-        private readonly string[] stopWords;
-        private readonly string[] partsOfSpeech;
+        private readonly IEnumerable<string> stopWords;
+        private readonly IEnumerable<string> partsOfSpeech;
         private readonly bool useStems;
-        public string Text { get; }
-        public readonly Dictionary<string, int> WordFrequencies = new Dictionary<string, int>();
-
-        public TextAnalyzer(string text, string[] stopWords, string[] partsOfSpeech = null, bool useStems = false)
+        public IEnumerable<string> Text { get; }
+        public IReadOnlyList<Word> WordList { get; private set; }
+        public int MaxFrequency { get; private set; }
+        
+        public TextAnalyzer(IEnumerable<string> text, IEnumerable<string> stopWords, IEnumerable<string> partsOfSpeech = null, bool useStems = false)
         {
             this.stopWords = stopWords;
             this.partsOfSpeech = partsOfSpeech;
@@ -23,13 +25,28 @@ namespace TagCloud
 
         private void Analyze()
         {
-            var words = Text.Split().Where(w => !stopWords.Contains(w)).Select(w => w.ToLowerInvariant());
+            var frequencies = GetWordStats();
+            WordList = frequencies.Select(kvp => new Word(kvp.Key, kvp.Value)).ToList();
+        }
+
+        private Dictionary<string, int> GetWordStats()
+        {
+            var wordFrequencies = new Dictionary<string, int>();
+            var maxFrequency = 0;
+            var words = Text
+                .Select(w => w.ToLowerInvariant())
+                .Select(w => Regex.Replace(w, @"(\W|\d)", string.Empty, RegexOptions.Compiled))
+                .Where(w => !stopWords.Contains(w));
             foreach (var word in words)
             {
-                if (!WordFrequencies.ContainsKey(word))
-                    WordFrequencies[word] = 0;
-                WordFrequencies[word]++;
+                if (!wordFrequencies.ContainsKey(word))
+                    wordFrequencies[word] = 0;
+                if (wordFrequencies[word]++ > maxFrequency)
+                    maxFrequency++;
             }
+
+            MaxFrequency = maxFrequency;
+            return wordFrequencies;
         }
     }
 }

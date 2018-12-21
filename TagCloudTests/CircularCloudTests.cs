@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -13,12 +14,14 @@ namespace TagCloudTests
     {
         private CloudLayouter layouter;
         private readonly Size size = new Size(20, 20);
+        private readonly List<IPlacementStrategy> strategies = new List<IPlacementStrategy>
+            {new SpiralStrategy(), new CenterMoveStrategy()};
 
         [SetUp]
         public void SetUp()
         {
             var point = new Point(0, 0);
-            layouter = new CloudLayouter(point, new SpiralStrategy(point), new CenterMoveStrategy(point));
+            layouter = new CloudLayouter(strategies);
         }
 
         [TearDown]
@@ -30,14 +33,20 @@ namespace TagCloudTests
                 Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
                 "Tests",
                 TestContext.CurrentContext.Test.Name + $"{DateTime.Now:yyyy-MM-dd_hh-mm-ss-fff}" + ".bmp");
-            new CloudVisualizer().CreateImage(layouter.Rectangles, imagePath);
+            var visualizer = new CloudVisualizer(imagePath);
+            foreach (var rectangle in layouter.Rectangles)
+            {
+                visualizer.AddWord(new Word("test", 0), rectangle, new Font(FontFamily.GenericSerif, 20));
+            }
+
+            visualizer.CreateImage(Color.Blue, Color.White);
             TestContext.Out.WriteLine("Tag cloud visualization saved to file " + imagePath);
         }
 
         [Test]
         public void Constructor_ShouldCreateLayouterWithCenter()
         {
-            var layouter = new CloudLayouter(new Point(0, 0));
+            var layouter = new CloudLayouter(strategies);
             layouter.Center.Should().Be(new Point(0, 0));
         }
 
@@ -71,8 +80,6 @@ namespace TagCloudTests
         {
             PopulateWithRandomRectangles(layouter);
 
-            new CloudVisualizer().CreateImage(layouter.Rectangles, @"D:\image.bmp");
-
             var rectanglesChecked = 1;
             foreach (var rectangle in layouter.Rectangles)
             {
@@ -86,6 +93,8 @@ namespace TagCloudTests
         [Test]
         public void PutNextRectangle_ShouldDistributeRectanglesDensely()
         {
+            const double expectedDensity = 0.6;
+
             PopulateWithRandomRectangles(layouter);
             var rectangles = layouter.Rectangles;
             var rectanglesArea = rectangles.Sum(r => r.Width * r.Height);
@@ -95,7 +104,7 @@ namespace TagCloudTests
             var circleArea = Math.PI * Math.Pow(radius, 2);
             var density = rectanglesArea / circleArea;
 
-            density.Should().BeGreaterOrEqualTo(0.6);
+            density.Should().BeGreaterOrEqualTo(expectedDensity);
         }
 
         [Test]

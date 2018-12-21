@@ -7,21 +7,20 @@ namespace TagCloud
 {
     public class CloudLayouter : ICloudLayouter
     {
-        private readonly IPlacementStrategy[] strategies;
+        private readonly IEnumerable<IPlacementStrategy> strategies;
         public Point Center { get; }
         public List<Rectangle> Rectangles { get; } = new List<Rectangle>();
 
-        public CloudLayouter(Point center = new Point(), params IPlacementStrategy[] strategies)
+        public CloudLayouter(IEnumerable<IPlacementStrategy> strategies)
         {
             this.strategies = strategies;
-            Center = center;
+            Center = new Point();
         }
 
         public Rectangle PutNextRectangle(Size rectangleSize)
         {
             if (rectangleSize.Width <= 0 || rectangleSize.Height <= 0)
                 throw new ArgumentException("Rectangle dimensions must be positive");
-
             var rectangle = new Rectangle(Center, rectangleSize);
             rectangle = strategies.Aggregate(rectangle,
                 (current, strategy) => strategy.PlaceRectangle(current, Rectangles.ToArray()));
